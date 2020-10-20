@@ -19,79 +19,8 @@ app.use(session({
   store: new FileStore()
 }))
 app.use(flash());
-// app.get('/flash', function(req, res){
-//   // Set a flash message by passing the key, followed by the value, to req.flash().
-//   req.flash('msg', 'Flash is back!')
-//   res.send('flash');
-// });
 
-// app.get('/flash-display', function(req, res){
-//   // Get an array of flash messages by passing the key to req.flash()
-//   var fmsg = req.flash();
-//   console.log(fmsg);
-//   res.send(fmsg);
-//   //res.render('index', { messages: req.flash('info') });
-// });
-
-var authData = {
-  email:'root@gmail.com',
-  password:'toor',
-  nickname:'Choi'
-}
-
-// include passport.js
-var passport = require('passport')
-  , LocalStrategy = require('passport-local').Strategy;
-
-app.use(passport.initialize());
-app.use(passport.session());
-
-passport.serializeUser(function(user, done) {
-  console.log('serializeUser', user);
-  done(null, user.email);
-});
-
-passport.deserializeUser(function(id, done) {
-  console.log('deserializeUser', id);
-  done(null, authData);
-});
-
-passport.use(new LocalStrategy({
-  usernameField: 'email',
-  passwordField: 'pwd'
-  },
-  function(username, password, done) {
-    console.log('LocalStratgy', username, password);
-    if(username === authData.email){
-      console.log(1);
-      if(password === authData.password){
-        console.log(2);
-        return done(null, authData);
-      } else{
-        console.log(3);
-        return done(null, false, {
-          message: 'Incorrect password.' 
-         });  
-      }
-    } else{
-      console.log(4);
-      return done(null, false, {
-        message: 'Incorrect username.' 
-       });
-    }
-  }
-));
-
-app.post('/auth/login_process',
-  passport.authenticate('local', { 
-    successRedirect: '/',
-    failureRedirect: '/auth/login',
-    failureFlash:true
-  // }), function(request, response){
-  //   request.session.save(function(){
-  //     response.redirect('/');
-  //   });
-  }));
+var passport = require('./lib/passport')(app);
 
 app.get('*', function(request, response, next){
   fs.readdir('./data', function(error, filelist){
@@ -102,7 +31,7 @@ app.get('*', function(request, response, next){
 
 var indexRouter = require('./routes/index');
 var topicRouter = require('./routes/topic');
-var authRouter = require('./routes/auth');
+var authRouter = require('./routes/auth')(passport);
 const { response } = require('express');
 
 app.use('/', indexRouter);
